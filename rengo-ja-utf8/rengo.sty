@@ -1,0 +1,212 @@
+% rengo.sty - STYLE FILE FOR JAPAN JOINT AUTOMATIC CONTROL CONFERENCE
+% 自動制御連合講演会論文集原稿作成用 スタイルファイル
+% 英語で執筆する場合は rengo-en.cls を使用してください.
+%
+% Version 2021-4-30  第64回自動制御連合講演会実行委員会修正
+% ・pLaTeX209をサポートから外し，pLaTeX2eのみ対応
+% Version 2020-2-26  第63回自動制御連合講演会プログラム委員会修正
+% Version 2019-7-10  第62回自動制御連合講演会プログラム委員会修正
+% Version 2018-2.23からの主な変更点：
+% ・日本語原稿と英語原稿で rengo.sty を共有していたために，英語原稿の執筆でも
+%   日本語用のLaTeXコンパイラが必要でした．そこで英語原稿用に rengo-en.sty
+%   を作成し，英語用のLaTeXコンパイラ，例えば pdflatex でもコンパイルできる
+%   ようにしました．
+% ・上記変更に伴い，\english コマンドを削除しました．
+% ・QEDマークに \Box を使用していたために \usepackage{latexsym} する必要
+%   がありました．QEDマークを \fbox で書き換え，latexsym が不要になりました
+%
+% usage:
+%  \documentclass[a4paper]{jarticle}
+%  \usepackage{rengo}
+%
+\NeedsTeXFormat{pLaTeX2e}
+\ProvidesClass{rengo}[2021/04/30
+ LaTeX document class for Japan Joint Automatic Control Conference (Rengo)]
+%
+% title, author, abstract
+%
+\newcommand{\jtitle}[1]{\gdef\@jtitle{#1}}
+\newcommand{\etitle}[1]{\gdef\@etitle{#1}}
+\newcommand{\jauthor}[1]{\gdef\@jauthor{#1}}
+\newcommand{\eauthor}[1]{\gdef\@eauthor{#1}}
+\newcommand{\englishabstract}[1]{\gdef\@englishabstract{#1}}
+\newcommand{\keyword}[1]{\gdef\@keyword{#1}}
+
+% Originates in article.cls
+\renewcommand\maketitle{\par
+  \begingroup
+  \renewcommand\thefootnote{\@fnsymbol\c@footnote}%
+  \def\@makefnmark{\rlap{\@textsuperscript{\normalfont\@thefnmark}}}%
+  \long\def\@makefntext##1{\parindent 1em\noindent
+    \hb@xt@1.8em{%
+      \hss\@textsuperscript{\normalfont\@thefnmark}}##1}%
+  \if@twocolumn
+  \ifnum \col@number=\@ne
+  \@maketitle
+  \else
+  \twocolumn[\@maketitle]%
+  \fi
+  \else
+  \newpage
+  \global\@topnum\z@   % Prevents figures from going at top of page.
+  \@maketitle
+  \fi
+  \thispagestyle{empty}\@thanks % suppress page number
+  \endgroup
+  \setcounter{footnote}{0}%
+  \global\let\thanks\relax
+  \global\let\maketitle\relax
+  \global\let\@maketitle\relax
+  \global\let\@thanks\@empty
+  \global\let\@jtitle\@empty
+  \global\let\@jauthor\@empty
+  \global\let\@etitle\@empty
+  \global\let\@eauthor\@empty
+  \global\let\@englishabstract\@empty
+  \global\let\@keyword\@empty
+  \global\let\jtitle\relax
+  \global\let\jauthor\relax
+  \global\let\etitle\relax
+  \global\let\eauthor\relax
+  \global\let\englishabstract\relax
+  \global\let\keyword\relax
+}
+%\def\maketitle{\par
+% \begingroup
+% \def\thefootnote{\fnsymbol{footnote}}
+% \def\@makefnmark{\hbox{$^{\@thefnmark}$\hss}}
+% \if@twocolumn
+% \twocolumn[\@maketitle]
+% \else \newpage
+% %
+% % suppress page number
+% %
+% \global\@topnum\z@ \@maketitle \fi\thispagestyle{empty}\@thanks
+% \endgroup
+% \setcounter{footnote}{0}
+% \let\maketitle\relax
+% \let\@maketitle\relax
+% \gdef\@thanks{}\gdef\@author{}\gdef\@title{}\let\thanks\relax}
+
+\def\@maketitle{%
+  \newpage
+  \null
+  %\vskip 2em%
+  \begin{center}%
+  \let \footnote \thanks
+    {\LARGE\bfseries \@jtitle}%
+    \vskip 1em%
+    {\large \@jauthor}%
+    \vskip 1em%
+    {\large\bfseries \@etitle}%
+    \vskip 1em%
+    {\large \@eauthor}%
+    \vskip 1em%
+    \parbox{150mm}{\baselineskip 12pt \small
+     \textbf{Abstract: }\@englishabstract\par
+     \vskip 1em
+     \textbf{Keywords: }\@keyword\par}
+  \end{center}%
+  \vskip 1em%
+}
+
+%
+% caption of the figures and tables should be ``Fig.~ ...'' and ``Table ...''
+%
+\def\fnum@figure{Fig.~\thefigure}
+\def\fnum@table{Table~\thetable}
+
+
+%
+% theorem text in \rm and label in \bf
+%
+\renewcommand{\@begintheorem}[2]{\trivlist \item[\hskip
+  \labelsep{\bf #1\ #2\ }]}
+\renewcommand{\@opargbegintheorem}[3]{\trivlist \item[\hskip
+  \labelsep{\bf #1\ #2\ \rm [#3]\ }]}
+
+%
+% narrower spaces in equation array
+%
+\def\eqnarray{\stepcounter{equation}\let\@currentlabel=\theequation
+\global\@eqnswtrue
+\global\@eqcnt\z@\tabskip\@centering\let\\=\@eqncr
+$$\halign to \displaywidth\bgroup\@eqnsel\hskip\@centering
+  $\displaystyle\tabskip\z@{##}$&\global\@eqcnt\@ne
+  \hfil$\displaystyle{{}##{}}$\hfil
+  &\global\@eqcnt\tw@
+   $\displaystyle\tabskip\z@{##}$\hfil
+   \tabskip\@centering&\llap{##}\tabskip\z@\cr}
+
+%
+% adjust character size and spaces around section header
+% Original from art10.sty
+%
+\def\section{\@startsection {section}{1}{\z@}{2.5ex plus 1ex minus
+ .2ex}{1.5ex plus .2ex}{\large\bf}}
+\def\subsection{\@startsection{subsection}{2}{\z@}{2.5ex plus 1ex minus
+ .2ex}{1.5ex plus .2ex}{\normalsize\bf}}
+\def\subsubsection{\@startsection{subsubsection}{3}{\z@}{2.5ex plus
+1ex minus .2ex}{1.5ex plus .2ex}{\normalsize\bf}}
+\def\paragraph{\@startsection
+ {paragraph}{4}{\z@}{2.5ex plus 1ex minus .2ex}{-1em}{\normalsize\bf}}
+\def\subparagraph{\@startsection
+ {subparagraph}{4}{\parindent}{2.5ex plus 1ex minus
+ .2ex}{-1em}{\normalsize\bf}}
+
+%
+% initialization
+%
+\twocolumn
+\pagestyle{empty}
+
+%
+% paper size for A4
+%
+%-----------------
+%\topmargin 0mm
+%\oddsidemargin -5mm
+%\evensidemargin -5mm
+%
+%\headheight 0pt
+%\headsep 0pt
+%\footskip 0pt
+%\columnseprule 0pt
+%\parindent 3mm
+%\textheight 240mm
+%\textwidth 172mm
+%\columnsep 6mm
+%-----------------
+\sloppy
+\flushbottom
+\parindent 1em
+\leftmargini 2em
+\leftmarginv .5em
+\leftmarginvi .5em
+\oddsidemargin -5.4mm
+\evensidemargin -5.4mm
+\marginparwidth 48pt
+\marginparsep 10pt
+\textwidth 170mm
+\textheight 250mm
+\topmargin -20mm
+\columnsep 7mm
+%------------------
+
+%
+% preparation for theorems and lemmas
+%
+\newtheorem{definition}{定義}
+\newtheorem{theorem}{定理}
+\newtheorem{corollary}{系}
+\newtheorem{lemma}{補題}
+\newtheorem{proof}{証明}
+  %
+  % suppress numbering
+  %
+  \renewcommand{\theproof}{}
+  %
+  % put a box at the end of proof
+  %
+  \renewcommand{\endproof}{\raisebox{0.7ex}{\fbox{\rule{0pt}{0pt}}} \endtrivlist}
+% end of rengo.sty
