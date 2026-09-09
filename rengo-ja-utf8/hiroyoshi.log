@@ -1,10 +1,10 @@
-This is e-upTeX, Version 3.141592653-p4.1.0-u1.29-230214-2.6 (utf8.euc) (TeX Live 2023/Debian) (preloaded format=platex 2026.3.30)  9 SEP 2026 19:30
+This is e-upTeX, Version 3.141592653-p4.1.0-u1.29-230214-2.6 (utf8.euc) (TeX Live 2023/Debian) (preloaded format=platex 2026.3.30)  9 SEP 2026 19:31
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**/home/hiroyoshi/my_project/ronbun_genko/rengo-ja-utf8/template
-(/home/hiroyoshi/my_project/ronbun_genko/rengo-ja-utf8/template.tex
+**/home/hiroyoshi/my_project/ronbun_genko/rengo-ja-utf8/hiroyoshi
+(/home/hiroyoshi/my_project/ronbun_genko/rengo-ja-utf8/hiroyoshi.tex
 pLaTeX2e <2023-02-14>+1, based on
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
@@ -65,8 +65,8 @@ File: l3backend-dvips.def 2024-01-04 L3 backend support: dvips
 \g__pdf_backend_annotation_int=\count268
 \g__pdf_backend_link_int=\count269
 \g__pdf_backend_link_sf_int=\count270
-) (./template.aux)
-\openout1 = `template.aux'.
+) (./hiroyoshi.aux)
+\openout1 = `hiroyoshi.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 37.
 LaTeX Font Info:    ... okay on input line 37.
@@ -124,7 +124,7 @@ LaTeX Font Info:    Kanji font shape `JY1/mc/m/it' undefined
 (Font)              No change on input line 169.
  [2
 
-] (./template.aux)
+] (./hiroyoshi.aux)
  ***********
 pLaTeX2e <2023-02-14>+1, based on
 LaTeX2e <2023-11-01> patch level 1
@@ -133,11 +133,11 @@ L3 programming layer <2024-01-22>
  ) 
 Here is how much of TeX's memory you used:
  1049 strings out of 474880
- 17332 string characters out of 5763303
+ 17344 string characters out of 5763303
  1930820 words of memory out of 5000000
  23340 multiletter control sequences out of 15000+600000
  569753 words of font info for 81 fonts, out of 8000000 for 9000
  929 hyphenation exceptions out of 8191
- 57i,6n,65p,235b,306s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 57i,6n,65p,236b,306s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on template.dvi (2 pages, 9620 bytes).
+Output written on hiroyoshi.dvi (2 pages, 9620 bytes).
