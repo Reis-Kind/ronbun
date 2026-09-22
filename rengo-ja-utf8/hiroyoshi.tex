@@ -10,28 +10,44 @@
 
 \documentclass[a4paper]{jarticle}
 \usepackage{rengo}
-% \usepackage[dvipdfmx]{graphicx}  <- [dvipdfmx]オプションをつけるとエラーになることがあります．
+\usepackage[dvipdfmx]{graphicx} 
 \usepackage{graphicx}
 \usepackage{amsmath}
 % \usepackage{amssymb}
 
 \jtitle{
-  遺伝的アルゴリズムを用いた2値化畳み込みニューラルネットワークの学習
+  遺伝的アルゴリズムを用いた\\
+  2値化重みを持つ畳み込みニューラルネットワークの学習
 }
 \jauthor{
   ○廣芳大二朗\ \ 内田雅人\ （米子工業高等専門学校）
 }
 \etitle{
-  Training Binary Convolutional Neural Networks Using Genetic Algorithms
+  Training Convolutional Neural Networks with Binary Weights Using Genetic Algorithms
 }
 \eauthor{
   $\ast$D.~Hiroyoshi, M.~Uchida (National Institute of Technology, Yonago College)
-}
-\englishabstract{
-  
-}
-\keyword{
 
+  }
+\englishabstract{
+BinaryConnect trains binary-weight neural networks by maintaining
+real-valued weights and using approximate gradients.
+In this study, we investigate a genetic algorithm (GA) for directly
+searching the binary weights of a convolutional neural network without
+gradient-based weight updates.
+Each individual represents the binarized weights of the convolutional
+and fully connected layers.
+Experiments on CIFAR-10 compare three methods: GA-only training,
+BinaryConnect, and additional GA search after BinaryConnect pretraining.
+In the combined method, the GA population is initialized using the
+BinaryConnect solution, its mutated variants, and randomly generated
+individuals.
+Their classification performance is compared using the test data.
+}
+
+\keyword{
+Binary Neural Network, Convolutional Neural Network,
+Genetic Algorithm, BinaryConnect
 }
 
 \begin{document}
@@ -39,31 +55,29 @@
 \maketitle
 
 \section{はじめに}
-
 2012年のImageNet Large Scale Visual Recognition Challengeにおいて，畳み込みニューラルネットワークを用いた画像認識モデルであるAlexNetが高い認識性能を示したことを受け，ディープラーニングは画像認識をはじめとする様々な分野で利用されるようになった\cite{alexnet}．一方で，ニューラルネットワークの高性能化に伴い，パラメータ数や計算量が増加し，計算資源やメモリ容量に制約のある環境への適用が課題となっている．
-この課題に対する手法として，2015年にCourbariauxらによってBinaryConnectが提案された\cite{binaryconnect}．BinaryConnectでは，ニューラルネットワークの重みを$−1$および$＋1$に二値化することで，メモリ使用量の削減や演算の簡略化を図る．ただし，二値化関数は不連続点で微分不可能であり，それ以外の点では微分が0となるため，通常のバックプロパゲーションをそのまま適用することが困難である．そのため，BinaryConnectでは実数値重みを保持し，近似した勾配を用いて学習を行う．
-一方，ニューラルネットワークの学習には，勾配に基づく手法だけでなく，遺伝的アルゴリズム（Genetic Algorithm：GA）などの進化的計算を用いて重みや構造を探索する手法も存在する．このような手法はニューロエヴォリューションと呼ばれる．GAは離散的な値を遺伝子として扱うことが可能であり，二値化ニューラルネットワークの重み探索にも適用できる．先行研究として，Okadaは全結合型の二値化ニューラルネットワークにGAを適用し，分類課題における重み最適化を検討している\cite{okada2021}．
-そこで本研究では，BinaryConnectによって事前学習した二値化畳み込みニューラルネットワークに対し，GAを用いて二値重みの組合せを直接探索する．
-これにより，勾配に基づく事前学習によって得られた重みを基点として，異なる探索方法による重みの最適化を行う
+この課題に対する手法として，2015年にCourbariauxらによってBinaryConnectが提案された\cite{binaryconnect}．BinaryConnectでは，ニューラルネットワークの重みを$−1$および$＋1$に2値化することで，メモリ使用量の削減や演算の簡略化を図る．ただし，2値化関数は不連続点で微分不可能であり，それ以外の点では微分が0となるため，通常のバックプロパゲーションをそのまま適用することが困難である．そのため，BinaryConnectでは実数値重みを保持し，近似した勾配を用いて学習を行う．
+一方，ニューラルネットワークの学習には，勾配に基づく手法だけでなく，遺伝的アルゴリズム（Genetic Algorithm：GA）などの進化的計算を用いて重みや構造を探索する手法も存在する．GAは離散的な値を遺伝子として扱うことが可能であり，2値化ニューラルネットワークの重み探索にも適用できる．先行研究として，Okadaは全結合型の2値化ニューラルネットワークにGAを適用し，分類課題における重み最適化を検討している\cite{okada2021}．
 
-\section{関連技術}
+そこで本研究では，2値重みを持つ畳み込みニューラルネットワークに対し，GAを用いて2値重みの組合せを直接探索する．同一のネットワーク構造を用いて，GAのみによる学習，BinaryConnectによる学習，およびBinaryConnectによる事前学習後にGAを適用する学習を比較する．これにより，GAのみによる学習の可能性と，BinaryConnectによって得られた重みに対するGAの追加探索の効果を検討する．
+
+\section{GAを用いた2値重みCNNの学習}
 
 
 \subsection{CNN}
 CNNは，畳み込み層を持つニューラルネットワークであり，画像の分類に必要な特徴を学習によって獲得する\cite{lecun1998}．
 畳み込み層では，学習可能なフィルタを用いて特徴を抽出し，プーリング層では特徴マップの空間的なサイズを縮小する．
-これらの処理を重ね，得られた特徴を全結合層へ入力することで，各クラスに対応する出力を得る．
-出力数は分類するクラス数に応じて設定する．
+画像分類では，これらの処理によって得られた特徴を全結合層などへ入力し，各クラスに対応する出力を求める．
 
 \subsection{BinaryConnect}
-BinaryConnectは，ニューラルネットワークの重みを$-1$と$+1$の二値に制限して学習する手法である\cite{binaryconnect}．
-通常のCNNでは重みを浮動小数で表現するが，二値化した重みは1ビットで表現できるため，重みの保存に必要なメモリ容量を削減できる．
-また，重みとの乗算を加減算に置き換えられることから，ハードウェア実装時の演算の簡略化が期待できる．
-一方，二値の重みだけでは，勾配に基づく小さな更新量を蓄積することが難しい．
-そのため，BinaryConnectでは学習用の実数値重みを保持し，計算に用いる二値化重みと区別する．
-順伝播では，実数値重みを二値化してネットワークの出力を求め，正解ラベルとの誤差を計算する．
+BinaryConnectは，順伝播時にニューラルネットワークの重みを$-1$または$+1$に2値化して学習する手法である\cite{binaryconnect}．
+通常のCNNでは重みを浮動小数で表現するが，2値化した重みは1ビットで表現できるため，重みの保存に必要なメモリ容量を削減できる．
+また，重みが$-1$または$+1$に制限されるため，ハードウェア実装時の演算の簡略化が期待できる．
+一方，2値の重みだけでは，勾配に基づく小さな更新量を蓄積することが難しい．
+そのため，BinaryConnectでは学習用の実数値重みを保持し，計算に用いる2値化重みと区別する．
+順伝播では，実数値重みを2値化してネットワークの出力を求め，正解ラベルとの誤差を計算する．
 逆伝播によって得られた勾配は実数値重みの更新に用いる．
-実数値重みを$w$，二値化した重みを$w_b$とし，式\eqref{eq:binarization}によって二値化する．
+実数値重みを$w$，2値化した重みを$w_b$とし，式\eqref{eq:binarization}によって2値化する．
 
 \begin{equation}
   w_b =
@@ -74,54 +88,213 @@ BinaryConnectは，ニューラルネットワークの重みを$-1$と$+1$の�
   \label{eq:binarization}
 \end{equation}
 
-この二値化関数は，$w=0$で微分不可能であり，それ以外の点では微分が0となる．
+この2値化関数は，$w=0$で微分不可能であり，それ以外の点では微分が0となる．
 そこで，逆伝播ではStraight-Through Estimator（STE）を用いて勾配を近似し，実数値重みを更新する．
-更新後の実数値重みは$-1$から$+1$の範囲に制限し，次の順伝播時に再び二値化する．
-推論時にも二値化した重みを用いて出力を求める．
-本研究では，畳み込み層の重みを二値化し，全結合層の重みは実数値で扱う．
+更新後の実数値重みは$-1$から$+1$の範囲に制限し，次の順伝播時に再び2値化する．
+推論時にも2値化した重みを用いて出力を求める．
 
-\subsection{遺伝的アルゴリズム}
+\subsection{遺伝的アルゴリズム（Genetic Algorithm：GA）}
 GAは生物の進化を模した確率的探索手法である\cite{holland1992}．
 解の候補を個体，個体を構成する要素を遺伝子として表現し，複数の個体からなる個体群を用いて探索を行う．
-各個体の良さを適応度によって評価し，選択，交叉および突然変異を繰り返すことで，適応度の高い解の獲得を目指す．
-勾配計算を必要としないため，二値化重みのような離散的な値を直接探索できる．
-GAなどの進化的計算を用いて，ニューラルネットワークの重みや構造を探索する手法は，ニューロエヴォリューションと呼ばれる．
-重みを探索する場合，一つの個体にネットワークの重みの組を対応させる．
-各個体の重みをネットワークに設定して入力データに対する出力を求め，その認識性能に基づいて適応度を評価する．
-選択，交叉および突然変異によって重みの組合せを変化させることで，勾配計算を用いずにネットワークの学習を行う．
-選択は，次世代の生成に用いる親個体を選ぶ操作である．
-交叉は，親個体の遺伝子を組み合わせ，新たな子個体を生成する操作である．本研究では
-突然変異は，遺伝子の値を確率的に変化させる操作である．
-これにより，両親で値が一致している遺伝子も変化させ，交叉だけでは生成できない重みの組合せを探索する．
-また，探索で得られた良好な解を保持するため，適応度の高い個体を変更せずに次世代へ引き継ぐエリート保存を行う．
-以上の処理を設定した世代数まで行い，最も適応度の高い個体を探索結果として採用する．
+GAによる探索では，まず複数の個体からなる初期個体群を生成し，各個体の良さを適応度によって評価する．
+次に，適応度に基づいて次世代の生成に用いる親個体を選択する．
+選択された親個体に対して交叉および突然変異を行い，新たな子個体を生成する．
+これらの処理を世代ごとに繰り返すことで，より適応度の高い個体を探索する．
+選択は，次世代の生成に用いる親個体を個体群から選ぶ操作である．交叉は，複数の親個体が持つ遺伝子を組み合わせ，新たな子個体を生成する操作である．
+突然変異は，個体の遺伝子を一定の確率で変化させる操作であり，交叉のみでは生成されにくい新たな解を探索する役割を持つ．
+また，探索によって得られた適応度の高い個体を失わないため，良好な個体を変更せずに次世代へ引き継ぐエリート保存が用いられる．
 
-\section{提案手法}
-本研究ではCIFAR-10を用いた10クラスの画像分類を行うため，
-出力数を10としたCNNを構築する．
-
-研究では，ネットワークの構造を固定し，探索対象となる二値化重みを1次元に並べて，一つの個体として表現する．
-各遺伝子はネットワーク内の一つの重みに対応し，$-1$または$+1$の値をとる．
-したがって，各個体は同じネットワーク構造に対する異なる重みの組合せを表す．
-個体を評価する際には，遺伝子を各層の重みの形状に戻して設定し，評価用データを入力して分類結果を求める．
-本研究では，この分類結果の正答率を適応度とし，正答率が高い個体ほど良い解として扱う．
+\subsection{GAによる2値重みCNNの学習}
+本研究では，GAを2値重みCNNの重み探索に適用する．
+畳み込み層および全結合層の2値重みを一定の順序で1次元に並べ，1つの個体として表現する．各遺伝子をランダムに$-1$または$+1$として生成し，初期個体群を構成する．
+個体を評価する際には，1次元に並べた遺伝子を各層の重みの形状に戻してネットワークに設定し，評価用データに対する分類結果を求める．本研究では，分類結果の正答率を適応度として用いる．
 評価用データ数を$N$，正しく分類されたデータ数を$N_{\mathrm{correct}}$とすると，適応度$F$は式\eqref{eq:fitness}で表される．
+
 \begin{equation}
   F = \frac{N_{\mathrm{correct}}}{N}
   \label{eq:fitness}
 \end{equation}
 
-本研究ではトーナメント選択を用い，個体群からランダムに抽出した複数の個体のうち，最も適応度の高い個体を親として選択する．
-
-本研究では，各遺伝子を所定の突然変異率で選び，その符号を反転させる．
+親個体の選択にはトーナメント選択を用いる．
+個体群からランダムに複数の個体を抽出し，その中で最も適応度の高い個体を親として選択する．
+交叉には一様交叉を用い，各遺伝子について2つの親個体のいずれかの値を等確率で子個体へ引き継ぐ．
+突然変異では，各遺伝子を所定の突然変異率で選択し，選択した遺伝子の符号を反転させる．
+また，適応度の高い個体の一部を変更せずに次世代へ引き継ぐエリート保存を行う．
+以上の処理を設定した世代数まで繰り返し，2値重みCNNの重みを探索する．
+また，本研究では，GAのみによる学習に加えて，BinaryConnectによる事前学習後にGAを適用する．
+BinaryConnectとGAを組み合わせた学習では，まずBinaryConnectによってCNNを事前学習する．
+事前学習終了後，畳み込み層および全結合層の重みを$-1$または$+1$に2値化し，これらを1次元に並べてGAにおける基準個体とする．
+GAの初期個体群には，この基準個体そのものに加え，基準個体の一部の遺伝子を突然変異させて生成した個体を用いる．
+さらに，初期個体群の多様性を確保するため，ランダムに生成した2値重みを持つ個体も加える．
+基準個体から個体を生成する際には，各遺伝子を所定の突然変異率で選択し，選択された遺伝子の符号を反転させる．
+このとき用いる突然変異率は，GAの世代更新時に用いる突然変異率と同一とする．
+初期個体群の生成後は，BinaryConnectによる勾配に基づく重み更新を行わず，GAによって2値重みの組合せを直接探索する．
+これにより，BinaryConnectによる事前学習で得られた重みを基点として，GAによる追加の重み探索を行う．
 
 
 \section{実験}
 
+\subsection{データセット}
+実験にはCIFAR-10を用いた．
+CIFAR-10は$32 \times 32$画素のカラー画像から構成される10クラスの画像分類用データセットであり，
+学習用データ50,000枚とテスト用データ10,000枚から構成される．
+本実験では，CIFAR-10の学習用データ50,000枚のうち45,000枚を学習およびGAによる探索に使用し，
+残りの5,000枚をモデル選択用データとして使用した．
+テスト用データ10,000枚は，最終的な認識性能を評価するために使用した．
+入力画像には，各色チャンネルについて平均
+$(0.4914, 0.4822, 0.4465)$，　標準偏差$(0.2023, 0.1994, 0.2010)$を用いた正規化を適用した．
+また，データ拡張は行わなかった．
+
+\subsection{ネットワーク構成}
+本実験では，3層の畳み込み層と1層の全結合層から構成されるCNNを用いた．
+畳み込み層の1層めは入力チャンネル数3，出力チャンネル数32とし，
+2層目は32チャンネルから64チャンネル，3層目は64チャンネルから128チャンネルへ変換する設計にした．
+各畳み込み層では，カーネルサイズを$3 \times 3$，パディングを1とし，
+各畳み込み層の後にはBatch Normalization，ReLUおよびMax Poolingを適用した．Max Poolingでは特徴マップの縦横サイズを半分にする．
+そのため，$32 \times 32$画素の入力画像は，3回のMax Pooling後に$4 \times 4$となる．
+第3畳み込み層から得られる$128 \times 4 \times 4$の特徴マップを1次元に変換し，出力数10の全結合層へ入力する．
+畳み込み層および全結合層にバイアスを使用せず，これら4層の重みを2値化およびGAによる探索の対象とした．
+なお，Batch Normalizationはすべての学習手法で使用するが，その扱いは学習手法によって異なる．
+BinaryConnectを用いる手法では，Batch Normalizationのパラメータをバックプロパゲーションによって学習した．
+一方，GAのみによる学習でも各畳み込み層の後にBatch Normalizationを適用するが，そのパラメータは学習せず固定し，
+評価時に入力されたバッチの平均および分散を用いて正規化した．
+
+\subsection{GAのみによる学習}
+まず，ランダムな2値重みからGAのみを用いてCNNを学習できるかを検証した．
+初期個体群は500個体とし，すべての個体をランダムな2値重みから生成した．
+各世代では，探索用データ45,000枚から2,000枚をランダムに抽出し，
+同一世代内のすべての個体を同じ画像で評価した．GAの探索条件をTable~\ref{tab:ga_condition}に示す．
+正答率を適応度とし，トーナメント選択，一様交叉，突然変異，およびエリート保存を用いて10,000世代の探索をした．
+\begin{table}[t]
+ \centering
+ \caption{Search conditions for genetic algorithms.
+ \label{tab:ga_condition}}
+ \begin{tabular}{|c|c|}
+  \hline
+  Parameter & Value \\
+  \hline
+  Population size & 500 \\
+  Elite size & 50 \\
+  Generations & 10,000 \\
+  Evaluation images & 2000 \\
+  Mutation rate & 0.0001 \\
+  Tournament size & 3 \\
+  Crossover & Uniform \\
+  \hline
+ \end{tabular}
+\end{table}
+GAのみによる学習における正答率および損失の推移をFig.~\ref{fig:ga_only_accuracy}に示す．
+探索初期には正答率が大きく向上したが，一方，世代数の増加に伴って正答率および損失の改善量は徐々に小さくなった．
+\begin{figure}[t]
+ \centering
+ \includegraphics[width=\linewidth]{ga_only_ronbun.png}
+ \caption{Accuracy during GA-only training.}
+ \label{fig:ga_only_accuracy}
+\end{figure}
+
+\subsection{BinaryConnectによる学習}
+
+次に，GAによる探索の初期解として用いる学習済みモデルを得るため，
+BinaryConnectによってCNNを学習した．BinaryConnectの学習条件をTable~\ref{tab:bc_condition}に示す．
+BinaryConnectでは，探索用データ45,000枚を用いて300エポック学習した．
+最適化手法にはAdamを用い，学習率を0.001，バッチサイズを64とした．
+各エポック終了後にモデル選択用データ5,000枚に対する正答率を求め，
+正答率が最も高いモデルを選択した．正答率が同一の場合には，損失の小さいモデルを選択した．
+
+\begin{table}[t]
+ \centering
+ \caption{Training conditions for BinaryConnect.
+ \label{tab:bc_condition}}
+ \begin{tabular}{|c|c|}
+  \hline
+  Parameter & Value \\
+  \hline
+  Optimizer & Adam \\
+  Learning rate & 0.001 \\
+  Batch size & 64 \\
+  Number of epochs & 300 \\
+  \hline
+ \end{tabular}
+\end{table}
+
+BinaryConnectによる学習中の正答率および損失の推移をFig.~\ref{fig:bc_result}に示す．
+学習の進行に伴って学習データに対する正答率は上昇し，損失は低下した．
+一方，テストデータに対する正答率は学習初期に大きく向上した後，改善量が小さくなった．
+\begin{figure}[t]
+ \centering
+ \includegraphics[width=\linewidth]{bin_cone_ronbun.png}
+ \caption{Accuracy and loss during BinaryConnect training.}
+ \label{fig:bc_result}
+\end{figure}
+モデル選択用データを用いて選択したBinaryConnectモデルのテスト正答率は71.48\%であった．
+
+\subsection{BinaryConnectによる事前学習後の追加GA}
+
+BinaryConnectによって得られたモデルを初期解として，GAによる追加の重み探索を行った．
+追加GAの探索条件をTable~\ref{tab:additional_ga_condition}に示す．
+GAのみによる学習と追加GAでは，個体数，エリート数，1世代あたりの評価画像数，
+突然変異率，トーナメントサイズおよび交叉方法を共通とした．
+一方，初期個体群は，BinaryConnectによって得られた基準個体を1個，基準個体を突然変異させた個体を449個，
+ランダムな2値重みから生成した個体を50個とした．各世代では探索用データ45,000枚から2,000枚をランダムに抽出し，
+同一世代内のすべての個体をその画像で評価した．追加GAでは1000世代の探索をした．
+
+\begin{table}[t]
+ \centering
+ \caption{Search conditions for additional GA.
+ \label{tab:additional_ga_condition}}
+ \begin{tabular}{|c|c|}
+  \hline
+  Parameter & Value \\
+  \hline
+  Population size & 500 \\
+  Original individuals & 1 \\
+  Mutated individuals & 449 \\
+  Random individuals & 50 \\
+  Elite size & 50 \\
+  Generations & 1,000 \\
+  Evaluation images & 2000 \\
+  Mutation rate & 0.0001 \\
+  Tournament size & 3 \\
+  Crossover & Uniform \\
+  \hline
+ \end{tabular}
+\end{table}
+
+追加GAにおける正答率および損失の推移をFig.~\ref{fig:additional_ga_result}に示す．
+探索用データに対する正答率は85\%以上で推移した一方，テストデータに対する正答率は72\%付近で推移し，
+世代数の増加に伴う大きな変化は見られなかった．損失についても，同様に探索後半では大きな変化は見られなかった．
+\begin{figure}[t]
+ \centering
+ \includegraphics[width=\linewidth]{ga_bc_ronbun.png}
+ \caption{Accuracy and loss during additional GA search.}
+ \label{fig:additional_ga_result}
+\end{figure}
+GA終了後，各世代で得られた最良個体および最終世代の個体を
+モデル選択用データ5,000枚で評価し，正答率が最も高い個体を最終個体として選択した．正答率が同一の場合には，損失の小さい個体を選択した．
+選択した個体のテスト正答率は72.68\%であり，追加GAを適用する前のBinaryConnectモデルの71.48\%と比較して，1.20\%高い値となった．
+
+
 \section{考察}
+GAのみによる学習では，ランダムな2値重みから探索を開始し，
+テストデータに対して60.20\%の正答率が得られた．
+このことから，本実験条件では，勾配に基づく重み更新を用いず，GAのみを用いた場合でも2値重みCNNの分類性能を向上させられることを確認した．
+しかし，本実験で用いたCNNでは，畳み込み層および全結合層に含まれる113,504個の重みをGAの探索対象とした．
+各重みは$-1$または$+1$の2値をとるため，取り得る重みの組合せは理論上$2^{113504}$通りとなる．
+GAのみによる学習では，この広大な探索空間に対してランダムな初期個体群から探索を開始する必要がある．
+そのため，10,000世代の探索を行った場合でも，高い分類性能を持つ重みの組合せを十分に探索することが困難であった可能性がある．
+
+BinaryConnectによって得られたモデルを基準個体としてGAによる追加探索を行った場合には，
+テスト正答率は72.68\%となり，BinaryConnectのみの場合の71.48\%から1.20\%向上した．
+勾配に基づく学習とは異なる方法で2値重みの組合せを探索したことで，BinaryConnectのみでは得られなかった重みの組合せを
+得られたと考えられる．
+
 
 \section{おわりに}
-
+本研究では，2値重みCNNに対してGAを適用し，
+GAのみによる学習，BinaryConnectによる学習，
+およびBinaryConnectによる事前学習後にGAを適用する学習を比較した．
+GAでは，畳み込み層および全結合層の2値重みを遺伝子として直接表現し，正答率を適応度として重み探索を行った．
+しかし，ランダムな2値重みから探索するため，
 
 
 
@@ -164,42 +337,5 @@ MIT Press，1992．
 
 \end{thebibliography}
 
-
-
-文献の引用は本文中に~\cite{web,Conference,Journal}のように書き，
-本文の最後にまとめて記述します．次のフォーマットを推奨します．
-
-\begin{enumerate}
-  \setlength{\topsep}{0pt}
-  \setlength{\partopsep}{0pt}
-  \setlength{\itemsep}{0pt}
-  \setlength{\parsep}{0pt}
-  \setlength{\parskip}{1pt plus 1pt minus 1pt}
-	\item[a)] 雑誌論文の場合\\
-	$[$番号$]$ 著者：論文題目；雑誌名，Vol.~巻, No.~号, pp.~始ページ--終ページ (発行年)
-	\item[b)] 会議論文の場合\\
-	$[$番号$]$ 著者：論文題目；会議論文誌名，pp.~始ページ--終ページ (発行年)
-	\item[c)] 単行本の場合\\
-	$[$番号$]$ 著者：書名，pp.~始ページ--終ページ, 発行所 (発行年)
-	\item[c)] Websiteの場合\\
-	$[$番号$]$ URL
-\end{enumerate}
-
-\begin{thebibliography}{9}
-\bibitem{web}
-http://www.jjacc.org/
-
-\bibitem{Conference}
-自動，制御，自動：
-自動制御連合講演会サンプル原稿；
-第65回自動制御連合講演会予稿集，pp.~1--4 (2023)
-
-\bibitem{Journal}
-T. Jido and J. Jido: Paper title; \textit{Journal Title}, Vol.~1, No.~1, pp.~1--4 (2023)
-
-\bibitem{Book}
-H. Seigyo: \textit{Book Title}, pp.~1--4, Publisher (2023)
-
-\end{thebibliography}
 \end{document}
 % end of template.tex
