@@ -1,4 +1,4 @@
-This is e-upTeX, Version 3.141592653-p4.1.0-u1.29-230214-2.6 (utf8.euc) (TeX Live 2023/Debian) (preloaded format=platex 2026.3.30)  23 SEP 2026 03:08
+This is e-upTeX, Version 3.141592653-p4.1.0-u1.29-230214-2.6 (utf8.euc) (TeX Live 2023/Debian) (preloaded format=platex 2026.3.30)  23 SEP 2026 03:13
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -180,7 +180,10 @@ File: bin_cone_ronbun.png Graphic file (type bmp)
 <bin_cone_ronbun.png>
 File: ga_bc_ronbun.png Graphic file (type bmp)
 <ga_bc_ronbun.png>
- [3] [4] [5
+ [3]
+Underfull \vbox (badness 2253) has occurred while \output is active []
+
+ [4] [5
 
 ] (./hiroyoshi.aux)
  ***********
@@ -198,4 +201,4 @@ Here is how much of TeX's memory you used:
  929 hyphenation exceptions out of 8191
  57i,9n,65p,535b,314s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on hiroyoshi.dvi (5 pages, 33428 bytes).
+Output written on hiroyoshi.dvi (5 pages, 34332 bytes).
